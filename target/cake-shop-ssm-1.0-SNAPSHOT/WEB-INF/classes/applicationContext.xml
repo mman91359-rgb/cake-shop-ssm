@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- 1. 加载配置文件 -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!-- 2. 配置数据源（Druid连接池） -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="initialSize" value="5"/>
+        <property name="maxActive" value="20"/>
+    </bean>
+
+    <!-- 3. 配置MyBatis-Plus SqlSessionFactory -->
+    <bean id="sqlSessionFactory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="com.hnkjzy.entity"/>
+        <property name="mapperLocations" value="classpath*:mapper/**/*.xml"/>
+        <property name="globalConfig" ref="globalConfig"/>
+    </bean>
+
+    <!-- 4. MyBatis-Plus全局配置 -->
+    <bean id="globalConfig" class="com.baomidou.mybatisplus.core.config.GlobalConfig">
+        <property name="dbConfig" ref="dbConfig"/>
+    </bean>
+
+    <!-- 5. 数据库配置 -->
+    <bean id="dbConfig" class="com.baomidou.mybatisplus.core.config.GlobalConfig.DbConfig">
+        <property name="idType" value="AUTO"/>
+    </bean>
+
+    <!-- 6. 配置Mapper扫描器 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.hnkjzy.mapper"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!-- 7. 扫描Service层（排除Controller） -->
+    <context:component-scan base-package="com.hnkjzy">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!-- 8. 配置事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 9. 开启事务注解 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+</beans>
